@@ -1,174 +1,179 @@
 ---
 name: web-security
-description: Context-aware web security patterns. Auto-detects what feature you are building (login, API, upload, payment, search, admin, etc.) and injects the correct security code. Works with any AI coding tool: Cursor, Copilot, Windsurf, Claude, ChatGPT.
-framework: tailwind
+description: SECURE BY DEFAULT. When building login, API routes, file uploads, database queries, payments, user content, admin panels, webhooks, forms, password reset, OAuth, or any web feature — auto-detect what the user is building and inject the correct security patterns BEFORE it ships. Prevents env leaks, XSS, SQLi, IDOR, CSRF, SSRF, path traversal, mass assignment. Frameworks: Next.js, React, Express, Remix, SvelteKit.
 ---
 
-# Web Security Patterns (Auto-Apply Mode)
+# Web Security Skill
 
-## How This Works
+## CORE BEHAVIOR
 
-**Do NOT wait for the user to ask for security.** When you see them building any of the features below, proactively read their code, detect the feature type, and inject the matching security pattern directly into their files. Explain only what you changed and why.
+**You are a security guard, not a reference manual.**
 
-## Auto-Detection Rules
+When the user writes code for ANY web feature, you MUST:
+1. Scan the code for the feature type (see detection table below)
+2. Check for missing security patterns
+3. Proactively inject fixes BEFORE the user asks
+4. Explain only what you changed and why
 
-| User is building | Trigger words | Security to inject |
+**NEVER wait for user to say "secure this."** If you see a form, you check it. If you see a route, you guard it. If you see a query, you parameterize it.
+
+## AUTO-DETECTION TABLE
+
+| What you see in code | Feature | Inject pattern # |
 |---|---|---|
-| Login / Signup form | `login`, `signup`, `register`, `signin`, `auth form`, `bcrypt`, `nextauth`, `clerk` | #1 Auth Flow |
-| API route / handler | `route.ts`, `api/`, `server action`, `trpc`, `endpoint`, `REST` | #2 API Route Guard |
-| File upload | `upload`, `file input`, `multer`, `formData`, `supabase storage`, `s3 upload` | #3 File Upload |
-| Database query | `prisma`, `drizzle`, `query`, `raw sql`, `execute`, `findMany`, `findUnique` | #4 Database Query |
-| Payment / Checkout | `stripe`, `checkout`, `payment`, `subscription`, `billing`, `paypal`, `lemonsqueezy` | #5 Payment |
-| User profile / settings | `profile`, `settings page`, `account`, `edit user`, `update user` | #6 User Data |
-| Comment / UGC / text input | `comment`, `review`, `textarea`, `user post`, `chat message` | #7 User Content |
-| Search | `search`, `searchbar`, `filter`, `query param` | #8 Search |
-| Admin panel | `admin`, `dashboard`, `admin route`, `moderator` | #9 Admin |
-| Webhook endpoint | `webhook`, `stripe webhook`, `postback` | #10 Webhook |
-| Contact / Newsletter form | `contact form`, `newsletter`, `subscribe`, `email signup` | #11 Public Form |
-| Password reset | `forgot password`, `reset password`, `reset token` | #12 Password Reset |
-| Middleware file | `middleware.ts`, `middleware` | #13 Middleware |
-| OAuth / Social login | `oauth`, `google login`, `github login`, `social` | #14 OAuth |
-| `.env` or secrets | `.env`, `API_KEY`, `DATABASE_URL`, `secret` | #15 Secrets |
-| Any new project | `new project`, `init`, `create app`, `npx create` | #16 Project Bootstrap |
+| `bcrypt`, `signup`, `signin`, `login`, `nextauth`, `clerk`, `auth()` missing | #AUTH | A |
+| `route.ts`, `api/`, `server action`, `trpc`, `endpoint`, `handler` | #API | B |
+| `formData`, `multer`, `upload`, `file`, `supabase.storage`, `s3.put` | #UPLOAD | C |
+| `$queryRawUnsafe`, `execute(` + template, SQL string concat | #DB | D |
+| `stripe`, `checkout`, `payment`, `subscription`, `billing` | #PAYMENT | E |
+| `profile`, `settings`, `account`, `edit user`, `update user` | #PROFILE | F |
+| `comment`, `review`, `textarea`, `dangerouslySetInnerHTML`, `innerHTML` | #CONTENT | G |
+| `search`, `searchbar`, `filter`, `ILIKE`, `LIKE` with input | #SEARCH | H |
+| `admin`, `dashboard`, `/admin`, `moderator`, `role` | #ADMIN | I |
+| `webhook`, `signature`, `stripe.webhooks`, `constructEvent` | #WEBHOOK | J |
+| `contact`, `newsletter`, `subscribe`, form without auth | #FORM | K |
+| `forgot password`, `reset password`, `reset token` | #RESET | L |
+| `middleware.ts`, `middleware` | #MIDDLEWARE | M |
+| `oauth`, `google login`, `github login`, `social`, `PKCE` | #OAUTH | N |
+| `.env`, `API_KEY=`, `SECRET=`, `sk-`, `ghp_`, `NEXT_PUBLIC_` + secret | #SECRETS | O |
+| `create-next-app`, `create app`, new project init | #BOOTSTRAP | P |
 
 ---
 
-## Security Patterns (Inject These)
-
-### #1 Auth Flow
-
-When detecting a login or signup form, check then inject:
+## A. AUTH FLOW
 
 ```
-DETECT: Read the auth code. Look for:
-- Is password hashed with bcrypt/argon2? (not plaintext, not SHA/MD5)
-- Is there rate limiting on the login endpoint?
-- Is input validated before the auth call?
-- Are cookies set with httpOnly, secure, sameSite?
-- Is there account lockout after N failed attempts?
-
-INJECT if missing:
+SCAN: Is password hashed? Is there rate limiting? Is input validated? Cookies secure?
+ACT: If any missing → inject immediately.
 ```
 
+### Password Hashing (mandatory)
 ```typescript
-// lib/auth-utils.ts (create if not exists)
+// lib/auth.ts
 import { hash, compare } from "bcryptjs"
+const SALT = 12
 
-const SALT_ROUNDS = 12
-const MAX_LOGIN_ATTEMPTS = 5
-const LOCKOUT_MINUTES = 15
+export async function hashPassword(pw: string) { return hash(pw, SALT) }
+export async function verifyPassword(pw: string, hashed: string) { return compare(pw, hashed) }
+```
 
-export async function hashPassword(password: string) {
-  return hash(password, SALT_ROUNDS)
-}
-
-export async function verifyPassword(password: string, hashed: string) {
-  return compare(password, hashed)
-}
-
-// Rate limit login attempts (lib/rate-limit.ts)
+### Login Rate Limiting (mandatory)
+```typescript
+// lib/rate-limit.ts
 import { LRUCache } from "lru-cache"
 
-const loginAttempts = new LRUCache<string, number>({
-  max: 10000,
-  ttl: 15 * 60 * 1000, // 15 min window
-})
+const attempts = new LRUCache<string, number>({ max: 10000, ttl: 15 * 60 * 1000 })
 
-export function checkLoginRateLimit(ip: string): boolean {
-  const attempts = loginAttempts.get(ip) || 0
-  if (attempts >= MAX_LOGIN_ATTEMPTS) return false
-  loginAttempts.set(ip, attempts + 1)
+export function checkLoginLimit(ip: string, max = 5): boolean {
+  const count = attempts.get(ip) || 0
+  if (count >= max) return false
+  attempts.set(ip, count + 1)
   return true
 }
 ```
 
+### Signup/Login Route Template
 ```typescript
-// app/api/auth/login/route.ts
-// In the POST handler, add:
 import { z } from "zod"
 
-const loginSchema = z.object({
+const authSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128),
 })
 
-// Inside POST():
-const parsed = loginSchema.safeParse(await req.json())
-if (!parsed.success) {
-  return Response.json({ error: "Invalid input" }, { status: 400 })
+export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for") || "unknown"
+  if (!checkLoginLimit(ip)) return Response.json({ error: "Too many attempts" }, { status: 429 })
+
+  const parsed = authSchema.safeParse(await req.json())
+  if (!parsed.success) return Response.json({ error: "Invalid input" }, { status: 400 })
+
+  // For signup: const hashed = await hashPassword(parsed.data.password)
+  // For login:  const valid = await verifyPassword(parsed.data.password, user.password)
 }
+```
 
-const ip = req.headers.get("x-forwarded-for") || "unknown"
-if (!checkLoginRateLimit(ip)) {
-  return Response.json({ error: "Too many attempts. Try again later." }, { status: 429 })
+### Session Cookie Config
+```typescript
+// auth.ts
+cookies: {
+  sessionToken: {
+    options: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    }
+  }
 }
-
-// Hash password for signup:
-// const hashedPassword = await hashPassword(parsed.data.password)
-
-// Verify for login:
-// const isValid = await verifyPassword(parsed.data.password, user.password)
 ```
 
 ---
 
-### #2 API Route Guard
-
-When detecting any API route, check then inject:
+## B. API ROUTE GUARD
 
 ```
-DETECT: Read the route file. Look for:
-- Is there an auth/session check at the top?
-- Is input validated with Zod/Yup?
-- Is the user ID from session, not request body/params?
-- Is there rate limiting on POST/PUT/DELETE?
-
-INJECT if missing:
+SCAN: Is there auth check at top? Input validated? Using session user ID (not body param)?
+ACT: If missing → add guard + Zod schema.
 ```
 
+### Every Authenticated Route Gets This
 ```typescript
-// app/api/[resource]/route.ts
 import { auth } from "@/auth"
-import { z } from "zod"
 
-// Put this at the TOP of every authenticated API route:
 async function guard(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  return session // returns session, not an error response
+  if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 })
+  return session
 }
 
-// Inside each handler:
 export async function GET(req: Request) {
   const session = await guard(req)
-  if (session instanceof Response) return session  // auth failed
+  if (session instanceof Response) return session
 
-  // NEVER do this (IDOR):
-  // const { userId } = await req.json()
-  // const data = await db.user.findUnique({ where: { id: userId } })
+  // ALWAYS: session.user.id for data scoping
+  // NEVER:  req.body.userId or req.query.userId (IDOR!)
+}
+```
 
-  // ALWAYS use session user ID:
-  const data = await db.user.findUnique({
-    where: { id: session.user.id }
+### Input Validation on Every Route
+```typescript
+import { z } from "zod"
+
+const schema = z.object({
+  title: z.string().min(1).max(200),
+  body: z.string().min(1).max(10000),
+})
+
+export async function POST(req: Request) {
+  const session = await guard(req)
+  if (session instanceof Response) return session
+
+  const parsed = schema.safeParse(await req.json())
+  if (!parsed.success) return Response.json({ error: "Invalid input" }, { status: 400 })
+
+  const item = await db.post.create({
+    data: { ...parsed.data, authorId: session.user.id }
   })
-  return Response.json(data)
+  return Response.json(item)
 }
 ```
 
 ---
 
-### #3 File Upload
+## C. FILE UPLOAD
 
-When detecting file upload code, inject ALL of these:
+```
+SCAN: Is file type validated? Size checked? Path traversal prevented? Safe filename?
+ACT: If ANY missing → inject the full upload-safe utility below.
+```
 
 ```typescript
-// lib/upload-safe.ts
+// lib/upload.ts
 import { writeFile } from "fs/promises"
 import path from "path"
 
-const ALLOWED_MIMES = {
+const ALLOWED = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
   "image/webp": [".webp"],
@@ -176,146 +181,84 @@ const ALLOWED_MIMES = {
   "application/pdf": [".pdf"],
 } as const
 
-const MAX_SIZE = 10 * 1024 * 1024 // 10MB
-const UPLOAD_DIR = path.join(process.cwd(), "public/uploads")
+const MAX = 10 * 1024 * 1024
+const DIR = path.join(process.cwd(), "public/uploads")
 
-export function validateUpload(file: File) {
-  // 1. No file
-  if (!file || file.size === 0) {
-    return { ok: false, error: "No file provided" }
-  }
-
-  // 2. Size check
-  if (file.size > MAX_SIZE) {
-    return { ok: false, error: `File too large. Max ${MAX_SIZE / 1024 / 1024}MB` }
-  }
-
-  // 3. MIME check
-  const allowed = ALLOWED_MIMES[file.type as keyof typeof ALLOWED_MIMES]
-  if (!allowed) {
-    return { ok: false, error: "Invalid file type" }
-  }
-
-  // 4. Extension matches MIME
+export function validateFile(file: File) {
+  if (!file || file.size === 0) return { ok: false, error: "No file" }
+  if (file.size > MAX) return { ok: false, error: `Max ${MAX / 1024 / 1024}MB` }
+  const types = ALLOWED[file.type as keyof typeof ALLOWED]
+  if (!types) return { ok: false, error: "Invalid type" }
   const ext = path.extname(file.name).toLowerCase()
-  if (!allowed.includes(ext)) {
-    return { ok: false, error: "File extension does not match type" }
-  }
-
+  if (!types.includes(ext)) return { ok: false, error: "Extension mismatch" }
   return { ok: true, error: null }
 }
 
-export function safeFileName(originalName: string) {
-  const ext = path.extname(originalName)
-  const sanitized = originalName
-    .replace(ext, "")
-    .replace(/[^a-zA-Z0-9_-]/g, "_")
-    .slice(0, 50)
-  return `${sanitized}-${crypto.randomUUID().slice(0, 8)}${ext}`
+export function safeName(original: string) {
+  const ext = path.extname(original)
+  const base = original.replace(ext, "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 50)
+  return `${base}-${crypto.randomUUID().slice(0, 8)}${ext}`
 }
 
 export async function saveFile(file: File) {
-  const name = safeFileName(file.name)
-  const filePath = path.join(UPLOAD_DIR, name)
+  const name = safeName(file.name)
+  const filepath = path.join(DIR, name)
 
-  // 5. Path traversal protection
-  const resolved = path.resolve(filePath)
-  const uploadResolved = path.resolve(UPLOAD_DIR)
-  if (!resolved.startsWith(uploadResolved)) {
-    throw new Error("Invalid file path")
-  }
+  if (!path.resolve(filepath).startsWith(path.resolve(DIR))) throw new Error("Path traversal")
 
-  const bytes = Buffer.from(await file.arrayBuffer())
-  await writeFile(filePath, bytes)
-  return { url: `/uploads/${name}`, path: filePath }
+  await writeFile(filepath, Buffer.from(await file.arrayBuffer()))
+  return { url: `/uploads/${name}` }
 }
 ```
 
 ---
 
-### #4 Database Query
-
-When detecting any database query, scan for:
+## D. DATABASE QUERIES
 
 ```
-DETECT: Look for patterns like:
-- $queryRawUnsafe(    ❌  DANGER
-- "${...}" in SQL     ❌  DANGER
-- String concatenation in SQL   ❌  DANGER
-- $queryRaw\`  or  sql\`   ✅  OK (tagged template)
-- ORM methods like findUnique, findFirst  ✅  OK
-
-SCAN ONLY SAFE: If all queries use ORM or tagged templates, do nothing.
-SCAN NOT SAFE: If raw string-concatenated SQL found, fix it.
+SCAN: Look for $queryRawUnsafe(, string concatenation in SQL, template + variable in raw query.
+ACT: If found → REPLACE with parameterized query or ORM. Never leave it.
 ```
 
-Inject fix:
 ```typescript
-// FIX: Replace string-built SQL with parameterized:
+// BEFORE (dangerous — FIX THIS)
+const users = await db.$queryRawUnsafe(`SELECT * FROM User WHERE email = '${email}'`)
 
-// BEFORE (unsafe)
-const users = await db.$queryRawUnsafe(
-  `SELECT * FROM User WHERE email = '${email}'`
-)
+// AFTER (safe — use this)
+const users = await db.$queryRaw`SELECT * FROM "User" WHERE email = ${email}`
 
-// AFTER (safe)
-const users = await db.$queryRaw`
-  SELECT * FROM "User" WHERE email = ${email}
-`
-
-// OR use ORM
+// BEST (use ORM)
 const users = await db.user.findUnique({ where: { email } })
 ```
 
 ---
 
-### #5 Payment / Checkout
-
-When detecting payment code:
+## E. PAYMENT
 
 ```
-DETECT: Read the checkout/payment file. Check:
-- Is the price validated server-side? (never trust client price)
-- Is the payment intent/idempotency key handled?
-- Is the webhook signature verified?
-- Are raw card details anywhere in logs/body? (they should never be)
-
-INJECT if missing:
+SCAN: Is price from server (not client)? Is webhook signature verified? Are stripe keys in server env only?
+ACT: Fix price source, add webhook verification.
 ```
 
 ```typescript
-// app/api/payment/create-checkout/route.ts
-import { auth } from "@/auth"
-import { z } from "zod"
-import Stripe from "stripe"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-// 1. Never trust client-side price
-const PRODUCT_PRICES: Record<string, number> = {
+// NEVER trust client price. ALWAYS server-side prices.
+const PRICES: Record<string, number> = {
   "pro_monthly": 2900,
   "pro_yearly": 29000,
 }
 
-const checkoutSchema = z.object({
-  productId: z.string().refine(id => id in PRODUCT_PRICES, "Invalid product"),
+const schema = z.object({
+  productId: z.string().refine(id => id in PRICES, "Invalid product"),
 })
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-  const parsed = checkoutSchema.safeParse(await req.json())
-  if (!parsed.success) {
-    return Response.json({ error: "Invalid request" }, { status: 400 })
-  }
+  const parsed = schema.safeParse(await req.json())
+  if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 })
 
-  // 2. Use server-side price, not client
-  const amount = PRODUCT_PRICES[parsed.data.productId]
-
-  const stripeSession = await stripe.checkout.sessions.create({
+  const checkout = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer_email: session.user.email!,
     metadata: { userId: session.user.id },
@@ -323,41 +266,36 @@ export async function POST(req: Request) {
     success_url: `${process.env.NEXT_PUBLIC_URL}/billing?success=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_URL}/billing?canceled=true`,
   })
-
-  return Response.json({ url: stripeSession.url })
+  return Response.json({ url: checkout.url })
 }
 ```
 
+### Webhook Verification (mandatory for Stripe)
 ```typescript
-// app/api/webhooks/stripe/route.ts
-import Stripe from "stripe"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 export async function POST(req: Request) {
   const body = await req.text()
   const sig = req.headers.get("stripe-signature")!
 
-  // 3. Verify webhook signature
-  let event: Stripe.Event
+  let event
   try {
-    event = stripe.webhooks.constructEvent(
-      body, sig, process.env.STRIPE_WEBHOOK_SECRET!
-    )
+    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
     return Response.json({ error: "Invalid signature" }, { status: 400 })
   }
-
-  // Handle event...
+  // Process verified event...
 }
 ```
 
 ---
 
-### #6 User Profile / Settings
+## F. USER PROFILE
+
+```
+SCAN: Is userId from session, not body? Are sensitive fields stripped from response?
+ACT: Use session.user.id. Strip password/token from response.
+```
 
 ```typescript
-// app/api/user/update/route.ts
 export async function PUT(req: Request) {
   const session = await guard(req)
   if (session instanceof Response) return session
@@ -368,65 +306,34 @@ export async function PUT(req: Request) {
   })
 
   const parsed = schema.safeParse(await req.json())
-  if (!parsed.success) {
-    return Response.json({ error: "Invalid input" }, { status: 400 })
-  }
+  if (!parsed.success) return Response.json({ error: "Invalid input" }, { status: 400 })
 
-  // CRITICAL: Use session.user.id, never accept userId from body
-  const updated = await db.user.update({
+  // ALWAYS session.user.id — NEVER from body
+  const user = await db.user.update({
     where: { id: session.user.id },
     data: parsed.data,
   })
 
-  // Never return password, token, or sensitive fields
-  const { password, ...safeUser } = updated
-  return Response.json(safeUser)
+  // Strip sensitive fields
+  const { password, ...safe } = user
+  return Response.json(safe)
 }
 ```
 
 ---
 
-### #7 User-Generated Content (Comments, Posts, Reviews)
+## G. USER CONTENT (Comments, Posts)
 
-```typescript
-// app/api/comments/route.ts
-import { auth } from "@/auth"
-import { z } from "zod"
-
-const commentSchema = z.object({
-  postId: z.string().uuid(),
-  content: z.string().min(1).max(2000),
-})
-
-export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const parsed = commentSchema.safeParse(await req.json())
-  if (!parsed.success) {
-    return Response.json({ error: "Invalid input" }, { status: 400 })
-  }
-
-  const comment = await db.comment.create({
-    data: {
-      postId: parsed.data.postId,
-      authorId: session.user.id,
-      content: parsed.data.content, // stored raw
-    },
-  })
-
-  return Response.json(comment)
-}
+```
+SCAN: Is dangerouslySetInnerHTML present WITHOUT DOMPurify? Is content validated?
+ACT: Add DOMPurify sanitization. Add content validation.
 ```
 
+### Frontend — Sanitize Before Render
 ```tsx
-// components/comment.tsx
-// In the frontend, always sanitize before render:
 import DOMPurify from "isomorphic-dompurify"
 
-function CommentCard({ content }: { content: string }) {
+function Comment({ content }: { content: string }) {
   return (
     <p dangerouslySetInnerHTML={{
       __html: DOMPurify.sanitize(content, {
@@ -438,138 +345,120 @@ function CommentCard({ content }: { content: string }) {
 }
 ```
 
+### Backend — Validate Before Store
+```typescript
+const schema = z.object({
+  content: z.string().min(1).max(2000),
+})
+
+export async function POST(req: Request) {
+  const session = await guard(req)
+  if (session instanceof Response) return session
+
+  const parsed = schema.safeParse(await req.json())
+  if (!parsed.success) return Response.json({ error: "Invalid input" }, { status: 400 })
+
+  const comment = await db.comment.create({
+    data: { content: parsed.data.content, authorId: session.user.id }
+  })
+  return Response.json(comment)
+}
+```
+
 ---
 
-### #8 Search
+## H. SEARCH
 
 ```typescript
-// app/api/search/route.ts
-// The search is a SQL injection and XSS risk vector
+// SAFE: parameterized ILIKE query
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const q = searchParams.get("q")
 
-  if (!q || q.length > 200) {
-    return Response.json({ results: [] })
-  }
+  if (!q || q.length > 200) return Response.json({ results: [] })
 
-  // SAFE: parameterized query
   const results = await db.$queryRaw`
     SELECT id, title, excerpt FROM posts
     WHERE published = true
     AND (title ILIKE ${`%${q}%`} OR excerpt ILIKE ${`%${q}%`})
     LIMIT 20
   `
-
   return Response.json({ results })
 }
 ```
 
 ---
 
-### #9 Admin Panel / Dashboard
+## I. ADMIN PANEL
 
 ```typescript
-// middleware.ts admin guard or inline guard
 import { auth } from "@/auth"
 
 export async function requireAdmin() {
   const session = await auth()
-  if (!session?.user || session.user.role !== "admin") {
-    throw new Error("Forbidden")
-  }
+  if (!session?.user || session.user.role !== "admin") throw new Error("Forbidden")
   return session
 }
 
-// app/api/admin/users/route.ts
+// In every admin route:
 export async function GET(req: Request) {
   await requireAdmin()
-  // ... admin logic
+  // Admin logic
 }
 
-// app/admin/layout.tsx
-import { redirect } from "next/navigation"
-import { auth } from "@/auth"
-
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// In admin layout:
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "admin") {
-    redirect("/login")
-  }
+  if (!session?.user || session.user.role !== "admin") redirect("/login")
   return <>{children}</>
 }
 ```
 
 ---
 
-### #10 Webhook Endpoint
+## J. WEBHOOK ENDPOINT
 
 ```typescript
-// app/api/webhooks/[service]/route.ts
 import { createHmac, timingSafeEqual } from "crypto"
 
-function verifyWebhookSignature(
-  body: string,
-  signature: string,
-  secret: string
-): boolean {
-  const expected = createHmac("sha256", secret).update(body).digest("hex")
-  const expectedBuffer = Buffer.from(expected)
-  const signatureBuffer = Buffer.from(signature.replace("sha256=", ""))
-
-  if (expectedBuffer.length !== signatureBuffer.length) return false
-  return timingSafeEqual(expectedBuffer, signatureBuffer)
+function verifySig(body: string, sig: string, secret: string): boolean {
+  const a = Buffer.from(createHmac("sha256", secret).update(body).digest("hex"))
+  const b = Buffer.from(sig.replace("sha256=", ""))
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
 }
 
 export async function POST(req: Request) {
   const body = await req.text()
-  const sig = req.headers.get("x-webhook-signature") || ""
-
-  if (!verifyWebhookSignature(body, sig, process.env.WEBHOOK_SECRET!)) {
+  if (!verifySig(body, req.headers.get("x-signature") || "", process.env.WEBHOOK_SECRET!)) {
     return Response.json({ error: "Invalid signature" }, { status: 400 })
   }
 
   const event = JSON.parse(body)
 
-  // Idempotency: check if event already processed
-  const existing = await db.event.findUnique({
-    where: { eventId: event.id },
-  })
-  if (existing) {
-    return Response.json({ status: "already processed" })
-  }
+  // Idempotency
+  const exists = await db.event.findUnique({ where: { eventId: event.id } })
+  if (exists) return Response.json({ status: "duplicate" })
 
-  // Process and mark as done in a transaction
   await db.$transaction([
     db.order.update({ where: { id: event.orderId }, data: { ... } }),
     db.event.create({ data: { eventId: event.id } }),
   ])
-
   return Response.json({ status: "ok" })
 }
 ```
 
 ---
 
-### #11 Public Form (Contact, Newsletter)
+## K. PUBLIC FORMS (Contact, Newsletter)
 
 ```typescript
-// 3 layers on every public form:
-// 1. Zod validation server-side
-// 2. Rate limiting (5/hour per IP)
-// 3. CSRF token OR use server actions (Next.js)
-
-const contactLimiter = rateLimit({ interval: 3600000, uniqueTokenPerInterval: 500 })
+const limiter = rateLimit({ interval: 3600000 }) // 1 hour window
 
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") || "unknown"
-  const { isRateLimited } = contactLimiter.check(5, ip)
-  if (isRateLimited) {
-    return Response.json({ error: "Rate limited" }, { status: 429 })
+  if (limiter.check(5, ip).isRateLimited) {
+    return Response.json({ error: "Too many requests" }, { status: 429 })
   }
 
   const schema = z.object({
@@ -579,64 +468,49 @@ export async function POST(req: Request) {
   })
 
   const parsed = schema.safeParse(await req.json())
-  if (!parsed.success) {
-    return Response.json({ error: "Invalid input" }, { status: 400 })
-  }
+  if (!parsed.success) return Response.json({ error: "Invalid input" }, { status: 400 })
 
-  // Process...
+  // Process form...
+  return Response.json({ ok: true })
 }
 ```
 
 ---
 
-### #12 Password Reset
+## L. PASSWORD RESET
 
 ```typescript
-// Rules for password reset flow:
-// 1. Token is single-use, stored hashed
-// 2. Token expires in 15-60 minutes
-// 3. Same response whether email exists or not (prevents enumeration)
-// 4. Rate limit the request endpoint
-// 5. Invalidate all sessions after password change
-
 import { randomBytes, createHash } from "crypto"
 
-export async function generateResetToken(userId: string) {
+export async function createResetToken(userId: string) {
   const token = randomBytes(32).toString("hex")
-  const hashedToken = createHash("sha256").update(token).digest("hex")
+  const hashed = createHash("sha256").update(token).digest("hex")
   const expires = new Date(Date.now() + 15 * 60 * 1000) // 15 min
 
-  await db.passwordResetToken.create({
-    data: { userId, token: hashedToken, expires },
-  })
-
-  return token // send this in email
+  await db.passwordReset.create({ data: { userId, token: hashed, expires } })
+  return token
 }
 
-// Always respond the same way
-export async function requestPasswordReset(email: string) {
+// ALWAYS return same response (prevents email enumeration)
+export async function requestReset(email: string) {
   const user = await db.user.findUnique({ where: { email } })
   if (user) {
-    const token = await generateResetToken(user.id)
-    // await sendResetEmail(email, token)
+    const token = await createResetToken(user.id)
+    // await sendEmail(email, token)
   }
-  // Return same message regardless
   return { message: "If that email exists, we sent a reset link." }
 }
 ```
 
 ---
 
-### #13 Middleware
-
-When detecting middleware.ts, ensure these are present:
+## M. MIDDLEWARE (Security Headers)
 
 ```typescript
-// middleware.ts - Complete secure middleware
+// middleware.ts
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 
-const securityHeaders = {
+const HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "0",
@@ -655,32 +529,17 @@ const securityHeaders = {
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next()
-
-  // Apply security headers
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    res.headers.set(key, value)
-  })
-
+  Object.entries(HEADERS).forEach(([k, v]) => res.headers.set(k, v))
   return res
-}
-
-export const config = {
-  matcher: "/((?!_next/static|_next/image|favicon.ico).*)",
 }
 ```
 
 ---
 
-### #14 OAuth / Social Login
+## N. OAUTH CONFIG
 
 ```typescript
-// When detecting OAuth setup, verify:
-// 1. redirect_uri is validated (exact match only)
-// 2. state parameter is used (prevents CSRF on OAuth callback)
-// 3. PKCE is used for SPA / mobile (code_challenge + code_verifier)
-// 4. Never expose client_secret on client side
-
-// With NextAuth.js, these are handled. Verify config:
+// Verify these are set correctly in auth config:
 export const authConfig = {
   providers: [
     Google({
@@ -690,10 +549,8 @@ export const authConfig = {
   ],
   callbacks: {
     signIn: async ({ account, profile }) => {
-      // Verify the email is verified by the provider
-      if (account?.provider === "google") {
-        return !!(profile as any).email_verified
-      }
+      // Verify email
+      if (account?.provider === "google") return !!(profile as any).email_verified
       return true
     },
   },
@@ -702,26 +559,16 @@ export const authConfig = {
 
 ---
 
-### #15 Environment Variables & Secrets
-
-When detecting secrets exposure:
+## O. SECRETS & ENV
 
 ```
-BEFORE PUSHING: Scan for patterns:
-- const KEY = "sk-"           ❌
-- const SECRET = "ghp_"       ❌
-- .env file staged in git     ❌
-- NEXT_PUBLIC_ prefixed for private keys  ❌
-
-ACTIONS:
-1. Move raw keys to .env (never committed)
-2. Create .env.example (safe to commit)
-3. For Next.js: only NEXT_PUBLIC_* vars are visible to client
-4. Regenerate any exposed keys immediately
+SCAN: git diff --cached for: sk-, ghp_, API_KEY=, SECRET=, password=, token=
+SCAN: .env in git? NEXT_PUBLIC_ with private key?
+ACT: Remove from code. Move to .env. Add .gitignore. Create .env.example.
 ```
 
 ```gitignore
-# Ensure .gitignore contains:
+# MUST HAVE:
 .env
 .env*.local
 ```
@@ -732,77 +579,58 @@ DATABASE_URL="postgresql://..."
 NEXTAUTH_SECRET="openssl rand -base64 32"
 NEXTAUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-STRIPE_SECRET_KEY="sk_live_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
 ```
 
 ---
 
-### #16 New Project Bootstrap
+## P. PROJECT BOOTSTRAP
 
-When detecting a fresh project, inject baseline security:
+When a new project is created, proactively:
 
+1. Verify `.gitignore` has `.env`
+2. Create `.env.example`
+3. Generate secure random secrets (never hardcode)
+4. Run `npm audit` / `pnpm audit`
+5. Add security headers to middleware
+6. Set secure session cookie defaults
+
+---
+
+## AUDIT MODE
+
+When user says `secure my app` or `security audit`:
+
+### Step 1 — Scan
 ```bash
-# 1. Create .gitignore with .env
-# 2. Create .env.example
-# 3. Generate NEXTAUTH_SECRET
-openssl rand -base64 32
-
-# 4. Run dependency audit
-npm audit
-
-# 5. Add security headers to next.config.ts (see #13)
-# 6. Set session cookie config in Auth.js
+# Read these files silently:
+cat package.json       # detect framework
+cat middleware.ts      # check headers
+ls app/api/            # list routes
+grep -r "dangerouslySetInnerHTML" --include="*.tsx"
+grep -r "queryRawUnsafe" --include="*.ts"
+grep -r "NEXT_PUBLIC_" --include=".env*"
+cat .gitignore         # check .env is listed
 ```
 
-```typescript
-// auth.ts - Secure session config
-export const authOptions: NextAuthConfig = {
-  session: {
-    strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-  },
-  cookies: {
-    sessionToken: {
-      name: process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
-}
+### Step 2 — Report
+```
+SECURITY AUDIT RESULTS
+======================
+
+🔴 CRITICAL (fix now):
+  - route.ts:15 — /api/users accepts userId from body (IDOR)
+  - page.tsx:42 — dangerouslySetInnerHTML without DOMPurify
+  - .env:3 — STRIPE_SECRET has NEXT_PUBLIC_ prefix
+
+🟡 WARNING (fix before deploy):
+  - middleware.ts missing security headers
+  - No rate limiting on /api/auth/login
+  - .env not in .gitignore
+
+🟢 PASS:
+  - All DB queries use ORM (Prisma)
+  - Auth checks present on protected routes
 ```
 
----
-
-## Audit Command
-
-When user explicitly says `security audit` or `secure my app`:
-
-### Step 1: Scan the project for the current framework
-Check `package.json` for: next, react, express, remix, nuxt, svelte, etc.
-
-### Step 2: Read key files
-- `middleware.ts` or server entry
-- `next.config.ts` / `next.config.js`
-- Any files in `app/api/` or `pages/api/`
-- Any file containing prisma or drizzle imports
-- `.gitignore`
-- Any `auth.ts` or `[...nextauth]` file
-
-### Step 3: Report with severity
-```
-RED CIRCLE  CRITICAL - Fix immediately
-YELLOW CIRCLE  WARNING - Fix before deploy
-GREEN CIRCLE  OK - No issues
-```
-
-### Step 4: Apply all fixes automatically
-After reporting, ask: "Apply all fixes?" and proceed to edit each file.
+### Step 3 — Fix
+Ask "Apply all fixes?" then edit each file directly. Show diff for each change.

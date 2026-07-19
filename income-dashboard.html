@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');</style>
+    <style>
+        /* ============================================
+           CSS VARIABLES - Color Palette
+           ============================================ */
+        :root {
+            --color-primary: #440154;
+            --color-secondary: #21918C;
+            --color-background: #1A1A2E;
+            --color-surface: #16213E;
+            --color-card: #0F3460;
+            --color-text: #F5F5F5;
+            --color-text-muted: #B0B0B0;
+            --color-cta: #FDE725;
+            --color-cta-text: #0F172A;
+            --color-success: #10B981;
+            --color-danger: #EF4444;
+            --color-warning: #F59E0B;
+            --color-border: #2D3748;
+            
+            /* Spacing */
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 1.5rem;
+            --space-lg: 2rem;
+            --space-xl: 3rem;
+            
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ============================================
+           RESET & BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fira Sans', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-lg);
+        }
+
+        .header {
+            background: var(--color-surface);
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 2px solid var(--color-primary);
+            margin-bottom: var(--space-xl);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .header h1 {
+            font-family: 'Fira Code', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-cta);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .total-balance {
+            text-align: right;
+        }
+
+        .total-balance-label {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .total-balance-amount {
+            font-family: 'Fira Code', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-success);
+        }
+
+        /* ============================================
+           STATS GRID
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+        }
+
+        .stat-card {
+            background: var(--color-card);
+            padding: var(--space-md);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--color-secondary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-xs);
+        }
+
+        .stat-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            margin-top: var(--space-xs);
+        }
+
+        .stat-change.positive {
+            color: var(--color-success);
+        }
+
+        .stat-change.negative {
+            color: var(--color-danger);
+        }
+
+        /* ============================================
+           ADD INCOME FORM
+           ============================================ */
+        .form-section {
+            background: var(--color-card);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: var(--space-xl);
+        }
+
+        .form-section h2 {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            margin-bottom: var(--space-md);
+            color: var(--color-cta);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-muted);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: var(--space-sm);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text);
+            font-family: 'Fira Sans', sans-serif;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(33, 145, 140, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            padding: var(--space-sm) var(--space-md);
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: 'Fira Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--color-cta);
+            color: var(--color-cta-text);
+        }
+
+        .btn-primary:hover {
+            background: #f4dd1a;
+        }
+
+        .btn-secondary {
+            background: var(--color-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1a7a76;
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: var(--space-xs) var(--space-sm);
+            font-size: 0.875rem;
+        }
+
+        /* ============================================
+           INCOME TABLE
+           ============================================ */
+        .table-section {
+            background: var(--color-card);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            margin-bottom: var(--space-xl);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .table-header h2 {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            color: var(--color-cta);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .filter-controls select,
+        .filter-controls input {
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text);
+            font-size: 0.875rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--color-surface);
+        }
+
+        th {
+            padding: var(--space-sm);
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        td {
+            padding: var(--space-sm);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(33, 145, 140, 0.05);
+        }
+
+        .amount-cell {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: var(--color-success);
+            font-size: 1.1rem;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--color-secondary);
+            color: white;
+            border-radius: var(--radius-xl);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: var(--space-xs);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-xl);
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-md);
+            opacity: 0.3;
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-md);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--color-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            padding: var(--space-lg);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .modal-header h3 {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.25rem;
+            color: var(--color-cta);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--color-text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--color-surface);
+            color: var(--color-text);
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .total-balance-amount {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: var(--space-md);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: var(--space-xs);
+            }
+
+            .actions-cell {
+                flex-direction: column;
+            }
+        }
+
+        /* ============================================
+           LOADING STATE
+           ============================================ */
+        .loading {
+            text-align: center;
+            padding: var(--space-xl);
+            color: var(--color-text-muted);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--color-border);
+            border-top-color: var(--color-cta);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           HOVER EFFECTS
+           ============================================ */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>
+                <span>💰</span>
+                Income Dashboard
+            </h1>
+            <div class="total-balance">
+                <div class="total-balance-label">Total Balance</div>
+                <div class="total-balance-amount" id="totalBalance">$0.00</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value" id="monthlyIncome">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Today</div>
+                <div class="stat-value" id="dailyIncome">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Entries</div>
+                <div class="stat-value" id="totalEntries">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Income</div>
+                <div class="stat-value" id="averageIncome">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Add Income Form -->
+        <section class="form-section">
+            <h2>➕ Add New Income</h2>
+            <form id="incomeForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="incomeSource">Source *</label>
+                        <input type="text" id="incomeSource" placeholder="e.g., Salary, Freelance" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeAmount">Amount *</label>
+                        <input type="number" id="incomeAmount" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeCategory">Category *</label>
+                        <select id="incomeCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Freelance">Freelance</option>
+                            <option value="Business">Business</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Gift">Gift</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeDate">Date *</label>
+                        <input type="date" id="incomeDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="incomeNotes">Notes</label>
+                    <textarea id="incomeNotes" placeholder="Additional notes..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span>
+                    Add Income
+                </button>
+            </form>
+        </section>
+
+        <!-- Income Table -->
+        <section class="table-section">
+            <div class="table-header">
+                <h2>📊 Income History</h2>
+                <div class="filter-controls">
+                    <select id="filterCategory">
+                        <option value="">All Categories</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Business">Business</option>
+                        <option value="Investment">Investment</option>
+                        <option value="Gift">Gift</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="month" id="filterMonth" placeholder="Filter by month">
+                    <button class="btn btn-secondary btn-small" id="clearFilters">Clear Filters</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Source</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incomeTableBody">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <p>No income entries yet. Add your first entry above!</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Income</h3>
+                <button class="modal-close" id="closeModal">×</button>
+            </div>
+            <form id="editIncomeForm">
+                <div class="form-group">
+                    <label for="editIncomeSource">Source *</label>
+                    <input type="text" id="editIncomeSource" required>
+                </div>
+                <div class="form-group">
+                    <label for="editIncomeAmount">Amount *</label>
+                    <input type="number" id="editIncomeAmount" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editIncomeCategory">Category *</label>
+                    <select id="editIncomeCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Business">Business</option>
+                        <option value="Investment">Investment</option>
+                        <option value="Gift">Gift</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editIncomeDate">Date *</label>
+                    <input type="date" id="editIncomeDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editIncomeNotes">Notes</label>
+                    <textarea id="editIncomeNotes"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <span>💾</span>
+                        Save Changes
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        let incomes = JSON.parse(localStorage.getItem('incomes')) || [];
+        let editingId = null;
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set today's date as default
+            document.getElementById('incomeDate').valueAsDate = new Date();
+            
+            // Load and display data
+            renderIncomes();
+            updateStats();
+            
+            // Event listeners
+            document.getElementById('incomeForm').addEventListener('submit', handleAddIncome);
+            document.getElementById('editIncomeForm').addEventListener('submit', handleEditIncome);
+            document.getElementById('filterCategory').addEventListener('change', renderIncomes);
+            document.getElementById('filterMonth').addEventListener('change', renderIncomes);
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+            document.getElementById('closeModal').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+        });
+
+        // ============================================
+        // ADD INCOME
+        // ============================================
+        function handleAddIncome(e) {
+            e.preventDefault();
+            
+            const newIncome = {
+                id: Date.now(),
+                source: document.getElementById('incomeSource').value,
+                amount: parseFloat(document.getElementById('incomeAmount').value),
+                category: document.getElementById('incomeCategory').value,
+                date: document.getElementById('incomeDate').value,
+                notes: document.getElementById('incomeNotes').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            incomes.unshift(newIncome);
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+            
+            // Reset form
+            e.target.reset();
+            document.getElementById('incomeDate').valueAsDate = new Date();
+            
+            // Show success feedback
+            showNotification('Income added successfully!', 'success');
+        }
+
+        // ============================================
+        // EDIT INCOME
+        // ============================================
+        function openEditModal(id) {
+            const income = incomes.find(inc => inc.id === id);
+            if (!income) return;
+            
+            editingId = id;
+            document.getElementById('editIncomeSource').value = income.source;
+            document.getElementById('editIncomeAmount').value = income.amount;
+            document.getElementById('editIncomeCategory').value = income.category;
+            document.getElementById('editIncomeDate').value = income.date;
+            document.getElementById('editIncomeNotes').value = income.notes || '';
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            editingId = null;
+            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editIncomeForm').reset();
+        }
+
+        function handleEditIncome(e) {
+            e.preventDefault();
+            
+            const incomeIndex = incomes.findIndex(inc => inc.id === editingId);
+            if (incomeIndex === -1) return;
+            
+            incomes[incomeIndex] = {
+                ...incomes[incomeIndex],
+                source: document.getElementById('editIncomeSource').value,
+                amount: parseFloat(document.getElementById('editIncomeAmount').value),
+                category: document.getElementById('editIncomeCategory').value,
+                date: document.getElementById('editIncomeDate').value,
+                notes: document.getElementById('editIncomeNotes').value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+            closeEditModal();
+            
+            showNotification('Income updated successfully!', 'success');
+        }
+
+        // ============================================
+        // DELETE INCOME
+        // ============================================
+        function deleteIncome(id) {
+            if (!confirm('Are you sure you want to delete this income entry?')) return;
+            
+            incomes = incomes.filter(inc => inc.id !== id);
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+            
+            showNotification('Income deleted successfully!', 'success');
+        }
+
+        // ============================================
+        // RENDER INCOMES
+        // ============================================
+        function renderIncomes() {
+            const tbody = document.getElementById('incomeTableBody');
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+            
+            let filtered = [...incomes];
+            
+            // Apply filters
+            if (filterCategory) {
+                filtered = filtered.filter(inc => inc.category === filterCategory);
+            }
+            
+            if (filterMonth) {
+                filtered = filtered.filter(inc => inc.date.startsWith(filterMonth));
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No income entries found.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(income => `
+                <tr>
+                    <td>${formatDate(income.date)}</td>
+                    <td>${income.source}</td>
+                    <td><span class="category-badge">${income.category}</span></td>
+                    <td class="amount-cell">$${income.amount.toFixed(2)}</td>
+                    <td>${income.notes || '-'}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-secondary btn-small" onclick="openEditModal(${income.id})">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteIncome(${income.id})">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================
+        // UPDATE STATISTICS
+        // ============================================
+        function updateStats() {
+            const total = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('totalBalance').textContent = `$${total.toFixed(2)}`;
+            
+            // Monthly income
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthlyTotal = incomes
+                .filter(inc => inc.date.startsWith(currentMonth))
+                .reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('monthlyIncome').textContent = `$${monthlyTotal.toFixed(2)}`;
+            
+            // Daily income
+            const today = now.toISOString().split('T')[0];
+            const dailyTotal = incomes
+                .filter(inc => inc.date === today)
+                .reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('dailyIncome').textContent = `$${dailyTotal.toFixed(2)}`;
+            
+            // Total entries
+            document.getElementById('totalEntries').textContent = incomes.length;
+            
+            // Average income
+            const average = incomes.length > 0 ? total / incomes.length : 0;
+            document.getElementById('averageIncome').textContent = `$${average.toFixed(2)}`;
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function saveToLocalStorage() {
+            localStorage.setItem('incomes', JSON.stringify(incomes));
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function clearFilters() {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterMonth').value = '';
+            renderIncomes();
+        }
+
+        function showNotification(message, type) {
+            // Simple console notification (can be replaced with a toast library)
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

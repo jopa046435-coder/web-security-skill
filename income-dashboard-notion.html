@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Dashboard - Notion Style</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');</style>
+    <style>
+        /* ============================================
+           NOTION-STYLE CSS VARIABLES
+           ============================================ */
+        :root {
+            /* Light Mode Colors (Notion-inspired) */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F7F6F3;
+            --bg-hover: #F1F0ED;
+            --bg-sidebar: #FBFBFA;
+            
+            --text-primary: #37352F;
+            --text-secondary: #787774;
+            --text-muted: #9B9A97;
+            
+            --border-color: #E9E9E7;
+            --divider: #EBEBEA;
+            
+            --accent-blue: #2383E2;
+            --accent-green: #0F7B6C;
+            --accent-purple: #9065B0;
+            --accent-red: #E03E3E;
+            --accent-yellow: #DFAB01;
+            --accent-orange: #D9730D;
+            
+            /* MMK specific */
+            --income-color: #0F7B6C;
+            --highlight-bg: #EDF3EC;
+            
+            /* Spacing (Notion-style) */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 24px;
+            --space-2xl: 32px;
+            
+            /* Border Radius */
+            --radius-sm: 3px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            
+            /* Shadows (subtle, Notion-style) */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
+        }
+
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           LAYOUT - NOTION SIDEBAR STYLE
+           ============================================ */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: var(--space-lg);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-xl);
+            padding: var(--space-sm);
+        }
+
+        .sidebar-icon {
+            font-size: 20px;
+        }
+
+        .sidebar-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 150ms ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ============================================
+           MAIN CONTENT AREA
+           ============================================ */
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            padding: var(--space-2xl);
+            max-width: 100%;
+        }
+
+        .page-header {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           NOTION-STYLE CARDS
+           ============================================ */
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-lg);
+            transition: all 150ms ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-icon {
+            font-size: 18px;
+        }
+
+        /* ============================================
+           STATS GRID (Notion-style)
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            transition: all 150ms ease;
+        }
+
+        .stat-card:hover {
+            background: var(--highlight-bg);
+            border-color: var(--accent-green);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--income-color);
+            font-feature-settings: 'tnum';
+            letter-spacing: -0.02em;
+        }
+
+        .stat-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: var(--space-xs);
+        }
+
+        /* ============================================
+           FORM ELEMENTS (Notion-style)
+           ============================================ */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 150ms ease;
+        }
+
+        .form-input:hover,
+        .form-select:hover,
+        .form-textarea:hover {
+            background: var(--bg-hover);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.08);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        /* ============================================
+           BUTTONS (Notion-style)
+           ============================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a75d2;
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c03232;
+        }
+
+        .btn-small {
+            padding: 4px var(--space-sm);
+            font-size: 13px;
+        }
+
+        /* ============================================
+           TABLE (Notion-style)
+           ============================================ */
+        .table-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .table-toolbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .table-filters {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: var(--space-md) var(--space-lg);
+            text-align: left;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background 100ms ease;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .table-amount {
+            font-weight: 600;
+            color: var(--income-color);
+            font-feature-settings: 'tnum';
+        }
+
+        .table-category {
+            display: inline-block;
+            padding: 2px var(--space-sm);
+            background: var(--bg-hover);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: var(--space-xs);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-md);
+            opacity: 0.3;
+        }
+
+        /* ============================================
+           MODAL (Notion-style)
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-xl);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-xl);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-xl);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 150ms ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 300ms ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: var(--space-lg);
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            table {
+                font-size: 13px;
+            }
+
+            th, td {
+                padding: var(--space-sm);
+            }
+
+            .mobile-menu-btn {
+                position: fixed;
+                bottom: var(--space-lg);
+                right: var(--space-lg);
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: var(--accent-blue);
+                color: white;
+                border: none;
+                box-shadow: var(--shadow-lg);
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 99;
+            }
+        }
+
+        /* ============================================
+           UTILITIES
+           ============================================ */
+        .mmk {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--divider);
+            margin: var(--space-xl) 0;
+        }
+
+        /* Content sections */
+        .content-section {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hide mobile menu on desktop */
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-icon">💰</span>
+            <span class="sidebar-title">Income Tracker</span>
+        </div>
+            <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="add-income">
+                <span class="nav-icon">➕</span>
+                <span>Add Income</span>
+            </a>
+            <a href="#" class="nav-item" data-section="history">
+                <span class="nav-icon">📈</span>
+                <span>History</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="app-container">
+        <main class="main-content">
+            <!-- Page Header -->
+            <header class="page-header">
+                <h1 class="page-title">Income Dashboard</h1>
+                <p class="page-subtitle">Track and manage your income sources</p>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Balance</div>
+                        <div class="stat-value mmk" id="totalBalance">0 Ks</div>
+                        <div class="stat-subtitle">All time income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">This Month</div>
+                        <div class="stat-value mmk" id="monthlyIncome">0 Ks</div>
+                        <div class="stat-subtitle" id="monthName">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Today</div>
+                        <div class="stat-value mmk" id="dailyIncome">0 Ks</div>
+                        <div class="stat-subtitle" id="todayDate">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Entries</div>
+                        <div class="stat-value" id="totalEntries">0</div>
+                        <div class="stat-subtitle">Records tracked</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Income Section -->
+            <section id="add-income-section" class="content-section" style="display: none;">
+                <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">➕</span>
+                    <h2 class="card-title">Add New Income</h2>
+                </div>
+                <form id="incomeForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Source</label>
+                            <input type="text" class="form-input" id="incomeSource" placeholder="e.g., Salary, Freelance" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount (MMK)</label>
+                            <input type="number" class="form-input" id="incomeAmount" placeholder="0" step="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="incomeCategory" required>
+                                <option value="">Select category</option>
+                                <option value="Salary">💼 Salary</option>
+                                <option value="Freelance">💻 Freelance</option>
+                                <option value="Business">🏢 Business</option>
+                                <option value="Investment">📈 Investment</option>
+                                <option value="Gift">🎁 Gift</option>
+                                <option value="Other">📦 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-input" id="incomeDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea class="form-textarea" id="incomeNotes" placeholder="Add notes..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span>
+                        Save Income
+                    </button>
+                </form>
+            </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="history-section" class="content-section" style="display: none;">
+                <!-- Income Table -->
+                <div class="table-container">
+                <div class="table-toolbar">
+                    <span class="table-toolbar-title">Income History</span>
+                    <div class="table-filters">
+                        <select class="form-select" id="filterCategory" style="min-width: 150px;">
+                            <option value="">All Categories</option>
+                            <option value="Salary">💼 Salary</option>
+                            <option value="Freelance">💻 Freelance</option>
+                            <option value="Business">🏢 Business</option>
+                            <option value="Investment">📈 Investment</option>
+                            <option value="Gift">🎁 Gift</option>
+                            <option value="Other">📦 Other</option>
+                        </select>
+                        <input type="month" class="form-input" id="filterMonth">
+                        <button class="btn btn-secondary btn-small" id="clearFilters">Clear</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Source</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomeTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <div class="empty-icon">📭</div>
+                                    <p>No income entries yet</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>✏️</span>
+                    Edit Income
+                </h3>
+                <button class="modal-close" id="closeModal">×</button>
+            </div>
+            <form id="editIncomeForm">
+                <div class="form-group">
+                    <label class="form-label">Source</label>
+                    <input type="text" class="form-input" id="editIncomeSource" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (MMK)</label>
+                    <input type="number" class="form-input" id="editIncomeAmount" step="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="editIncomeCategory" required>
+                        <option value="">Select category</option>
+                        <option value="Salary">💼 Salary</option>
+                        <option value="Freelance">💻 Freelance</option>
+                        <option value="Business">🏢 Business</option>
+                        <option value="Investment">📈 Investment</option>
+                        <option value="Gift">🎁 Gift</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="editIncomeDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-textarea" id="editIncomeNotes"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span>
+                        Save Changes
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+    <script>
+        // ============================================
+        // STATE
+        // ============================================
+        let incomes = JSON.parse(localStorage.getItem('incomes')) || [];
+        let editingId = null;
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('incomeDate').valueAsDate = new Date();
+            updateDateLabels();
+            renderIncomes();
+            updateStats();
+            
+            // Event listeners
+            document.getElementById('incomeForm').addEventListener('submit', handleAddIncome);
+            document.getElementById('editIncomeForm').addEventListener('submit', handleEditIncome);
+            document.getElementById('filterCategory').addEventListener('change', renderIncomes);
+            document.getElementById('filterMonth').addEventListener('change', renderIncomes);
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+            document.getElementById('closeModal').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileSidebar);
+            
+            // Navigation listeners
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', handleNavigation);
+            });
+        });
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function handleNavigation(e) {
+            e.preventDefault();
+            
+            const clickedItem = e.currentTarget;
+            const sectionName = clickedItem.getAttribute('data-section');
+            
+            // Update active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            clickedItem.classList.add('active');
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Income Dashboard',
+                'add-income': 'Add New Income',
+                'history': 'Income History'
+            };
+            
+            const subtitles = {
+                'dashboard': 'Track and manage your income sources',
+                'add-income': 'Record a new income entry',
+                'history': 'View all your income records'
+            };
+            
+            document.querySelector('.page-title').textContent = titles[sectionName] || 'Income Dashboard';
+            document.querySelector('.page-subtitle').textContent = subtitles[sectionName] || 'Track and manage your income sources';
+            
+            // Close mobile sidebar if open
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('mobile-open');
+            }
+        }
+
+        // ============================================
+        // MMK FORMATTER
+        // ============================================
+        function formatMMK(amount) {
+            return amount.toLocaleString('en-US') + ' Ks';
+        }
+
+        // ============================================
+        // DATE LABELS
+        // ============================================
+        function updateDateLabels() {
+            const now = new Date();
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('monthName').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+            document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // ============================================
+        // ADD INCOME
+        // ============================================
+        function handleAddIncome(e) {
+            e.preventDefault();
+            
+            const newIncome = {
+                id: Date.now(),
+                source: document.getElementById('incomeSource').value,
+                amount: parseInt(document.getElementById('incomeAmount').value),
+                category: document.getElementById('incomeCategory').value,
+                date: document.getElementById('incomeDate').value,
+                notes: document.getElementById('incomeNotes').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            incomes.unshift(newIncome);
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+            
+            e.target.reset();
+            document.getElementById('incomeDate').valueAsDate = new Date();
+            
+            // Switch to history section to show the new entry
+            document.querySelector('[data-section="history"]').click();
+        }
+
+        // ============================================
+        // EDIT INCOME
+        // ============================================
+        function openEditModal(id) {
+            const income = incomes.find(inc => inc.id === id);
+            if (!income) return;
+            
+            editingId = id;
+            document.getElementById('editIncomeSource').value = income.source;
+            document.getElementById('editIncomeAmount').value = income.amount;
+            document.getElementById('editIncomeCategory').value = income.category;
+            document.getElementById('editIncomeDate').value = income.date;
+            document.getElementById('editIncomeNotes').value = income.notes || '';
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            editingId = null;
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function handleEditIncome(e) {
+            e.preventDefault();
+            
+            const incomeIndex = incomes.findIndex(inc => inc.id === editingId);
+            if (incomeIndex === -1) return;
+            
+            incomes[incomeIndex] = {
+                ...incomes[incomeIndex],
+                source: document.getElementById('editIncomeSource').value,
+                amount: parseInt(document.getElementById('editIncomeAmount').value),
+                category: document.getElementById('editIncomeCategory').value,
+                date: document.getElementById('editIncomeDate').value,
+                notes: document.getElementById('editIncomeNotes').value
+            };
+            
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+            closeEditModal();
+        }
+
+        // ============================================
+        // DELETE INCOME
+        // ============================================
+        function deleteIncome(id) {
+            if (!confirm('Delete this income entry?')) return;
+            
+            incomes = incomes.filter(inc => inc.id !== id);
+            saveToLocalStorage();
+            renderIncomes();
+            updateStats();
+        }
+
+        // ============================================
+        // RENDER
+        // ============================================
+        function renderIncomes() {
+            const tbody = document.getElementById('incomeTableBody');
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+            
+            let filtered = [...incomes];
+            
+            if (filterCategory) {
+                filtered = filtered.filter(inc => inc.category === filterCategory);
+            }
+            
+            if (filterMonth) {
+                filtered = filtered.filter(inc => inc.date.startsWith(filterMonth));
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <p>No income entries found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(income => `
+                <tr>
+                    <td>${formatDate(income.date)}</td>
+                    <td>${income.source}</td>
+                    <td><span class="table-category">${getCategoryIcon(income.category)} ${income.category}</span></td>
+                    <td class="table-amount mmk">${formatMMK(income.amount)}</td>
+                    <td class="text-muted">${income.notes || '—'}</td>
+                    <td class="table-actions">
+                        <button class="btn btn-secondary btn-small" onclick="openEditModal(${income.id})">Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteIncome(${income.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================
+        // STATS
+        // ============================================
+        function updateStats() {
+            const total = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('totalBalance').textContent = formatMMK(total);
+            
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthlyTotal = incomes
+                .filter(inc => inc.date.startsWith(currentMonth))
+                .reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('monthlyIncome').textContent = formatMMK(monthlyTotal);
+            
+            const today = now.toISOString().split('T')[0];
+            const dailyTotal = incomes
+                .filter(inc => inc.date === today)
+                .reduce((sum, inc) => sum + inc.amount, 0);
+            document.getElementById('dailyIncome').textContent = formatMMK(dailyTotal);
+            
+            document.getElementById('totalEntries').textContent = incomes.length;
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function saveToLocalStorage() {
+            localStorage.setItem('incomes', JSON.stringify(incomes));
+        }
+
+        function formatDate(dateString) {
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'Salary': '💼',
+                'Freelance': '💻',
+                'Business': '🏢',
+                'Investment': '📈',
+                'Gift': '🎁',
+                'Other': '📦'
+            };
+            return icons[category] || '📦';
+        }
+
+        function clearFilters() {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterMonth').value = '';
+            renderIncomes();
+        }
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        }
+
+        // Close modal on outside click
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') closeEditModal();
+        });
+    </script>
+</body>
+</html>

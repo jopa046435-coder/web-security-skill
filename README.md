@@ -1,9 +1,8 @@
-
 # Web Security Patterns
 
 **You build. This secures. Automatically.**
 
-A comprehensive web security guide that works with any AI coding tool (Cursor, Copilot, Windsurf, Claude, ChatGPT, OpenCode). Drop the SKILL.md into your project and your AI assistant auto-detects what you are building and injects the right security patterns.
+A comprehensive web security guide that works with any AI coding tool (Cursor, Copilot, Windsurf, Claude, ChatGPT, OpenCode). Drop the SKILL.md into your project and your AI assistant auto-detects what you're building and injects the right security patterns.
 
 > Built for vibe coders using Next.js, React, Express, and modern full-stack frameworks.
 
@@ -11,13 +10,13 @@ A comprehensive web security guide that works with any AI coding tool (Cursor, C
 
 | You build | AI detects | It injects |
 |---|---|---|
-| Login form | Sees  + "" + crypt + "" + ,  + "" + signup + "" +  | Adds rate limiting, Zod validation, session cookie hardening |
-| API route | Sees  + "" + oute.ts + "" + ,  + "" + handler + "" +  | Adds auth guard, input validation, IDOR prevention |
-| File upload | Sees  + "" + ormData + "" + ,  + "" + multer + "" +  | Adds type/size/path checks, safe filenames |
-| DB query | Sees  + "" + $queryRawUnsafe + "" +  | Replaces with parameterized queries |
-| Payment page | Sees  + "" + stripe + "" + ,  + "" + checkout + "" +  | Server-validates prices, verifies webhook sigs |
-| Comments/UGC | Sees  + "" + 	extarea + "" + ,  + "" + comment + "" +  | Adds XSS sanitization, rate limiting |
-| Admin panel | Sees  + "" + /admin + "" + ,  + "" + dashboard + "" +  | Adds role check, audit logging |
+| Login form | Sees `bcrypt`, `signup` | Adds rate limiting, Zod validation, session cookie hardening |
+| API route | Sees `route.ts`, `handler` | Adds auth guard, input validation, IDOR prevention |
+| File upload | Sees `formData`, `multer` | Adds type/size/path checks, safe filenames |
+| DB query | Sees `$queryRawUnsafe` | Replaces with parameterized queries |
+| Payment page | Sees `stripe`, `checkout` | Server-validates prices, verifies webhook sigs |
+| Comments/UGC | Sees `textarea`, `comment` | Adds XSS sanitization, rate limiting |
+| Admin panel | Sees `/admin`, `dashboard` | Adds role check, audit logging |
 
 ## 16 Auto-Apply Patterns
 
@@ -40,12 +39,14 @@ A comprehensive web security guide that works with any AI coding tool (Cursor, C
 
 ## Quick Start
 
-Drop  + "" + SKILL.md + "" +  into your project folder and tell your AI:
+Drop `SKILL.md` into your project folder and tell your AI:
 
- + "" + + "" + secure my app + "" + 
- + "" + + "" + security audit + "" + 
- + "" + + "" + check security for login form + "" + 
- + "" + + "" + ix file upload security + "" + 
+```
+secure my app
+security audit
+check security for login form
+fix file upload security
+```
 
 The AI reads the patterns and applies them to your codebase immediately.
 

@@ -1,54 +1,41 @@
 # Web Security Patterns
 
-**You build. This secures. Automatically.**
+**Your AI ships code. This makes sure it's safe.**
 
-A comprehensive web security guide that works with any AI coding tool (Cursor, Copilot, Windsurf, Claude, ChatGPT, OpenCode). Drop the SKILL.md into your project and your AI assistant auto-detects what you're building and injects the right security patterns.
+The only web security skill that works as a behavior modifier — auto-detects what feature you're building and injects security patterns BEFORE you ship. Works with Cursor, Copilot, Claude Code, Windsurf, and any AI coding tool.
 
-> Built for vibe coders using Next.js, React, Express, and modern full-stack frameworks.
+---
 
-## How It Works (Not a Reference. An Engine.)
+## How It Works
 
-| You build | AI detects | It injects |
+```
+You write code → Skill detects feature → Injects security → You ship safe
+```
+
+| You build | AI sees | It injects |
 |---|---|---|
-| Login form | Sees `bcrypt`, `signup` | Adds rate limiting, Zod validation, session cookie hardening |
-| API route | Sees `route.ts`, `handler` | Adds auth guard, input validation, IDOR prevention |
-| File upload | Sees `formData`, `multer` | Adds type/size/path checks, safe filenames |
-| DB query | Sees `$queryRawUnsafe` | Replaces with parameterized queries |
-| Payment page | Sees `stripe`, `checkout` | Server-validates prices, verifies webhook sigs |
-| Comments/UGC | Sees `textarea`, `comment` | Adds XSS sanitization, rate limiting |
-| Admin panel | Sees `/admin`, `dashboard` | Adds role check, audit logging |
+| Login form | `bcrypt`, `signup` | Rate limiting, Zod validation, session hardening |
+| API route | `route.ts` | Auth guard, input validation, IDOR prevention |
+| File upload | `formData`, `multer` | Type/size/path validation, safe filenames |
+| DB query | `$queryRawUnsafe` | Parameterized query replacement |
+| Payment | `stripe`, `checkout` | Server-side prices, webhook verification |
+| Comments | `dangerouslySetInnerHTML` | DOMPurify sanitization |
+| Admin panel | `/admin`, `dashboard` | Role guard, session check |
 
 ## 16 Auto-Apply Patterns
 
-1. Auth Flow (login/signup)
-2. API Route Guard
-3. File Upload
-4. Database Query
-5. Payment/Checkout
-6. User Profile/Settings
-7. User Generated Content
-8. Search
-9. Admin/Dashboard
-10. Webhook Endpoint
-11. Public Forms
-12. Password Reset
-13. Middleware + Headers
-14. OAuth/Social Login
-15. Environment Secrets
-16. New Project Bootstrap
+A) Auth Flow · B) API Route Guard · C) File Upload · D) Database Query · E) Payment · F) User Profile · G) User Content · H) Search · I) Admin · J) Webhook · K) Public Forms · L) Password Reset · M) Middleware · N) OAuth · O) Secrets · P) Bootstrap
 
 ## Quick Start
 
-Drop `SKILL.md` into your project folder and tell your AI:
+Drop `SKILL.md` in your project and start coding. The skill activates automatically.
 
 ```
-secure my app
-security audit
-check security for login form
-fix file upload security
+secure my app          → Full security audit
+fix login security     → Pattern A applied
+check API routes       → Pattern B applied
+scan for secrets       → Pattern O applied
 ```
-
-The AI reads the patterns and applies them to your codebase immediately.
 
 ## License
 
